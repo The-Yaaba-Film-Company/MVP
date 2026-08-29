@@ -27,5 +27,21 @@ export default defineConfig({
         inline: true,
       },
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary'],
+      include: ['src/api/**', 'src/features/**'],
+      exclude: [
+        '**/*.{test,spec}.{ts,tsx}',
+        'src/api/types.ts',
+        'src/api/mocks/**',
+      ],
+      thresholds: {
+        lines: 80,
+        statements: 80,
+        functions: 80,
+        branches: 75,
+      },
+    },
   },
 })

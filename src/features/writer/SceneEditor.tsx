@@ -4,7 +4,15 @@ import { getScreenplayExtensions } from './schema'
 import { useSceneAutosave } from './useSceneAutosave'
 import { SlashCommandMenu } from './SlashCommandMenu'
 import { slashItems } from './elements'
-import type { Scene } from '#/api/types'
+import { useSemanticDecorations } from '../semantic/decorations'
+import { TagMenu } from '../semantic/TagMenu'
+import { EntityPicker } from '../semantic/EntityPicker'
+import { SuggestionList } from '../semantic/SuggestionList'
+import { CharacterAutocomplete } from '../semantic/CharacterAutocomplete'
+import { selectionToSpan } from '../semantic/offset'
+import { useCreateAnnotation, useCreateEntity } from '../semantic/queries'
+import type { TextSpan } from '../semantic/offset'
+import type { EntityType, Scene } from '#/api/types'
 
 interface SlashState {
   query: string
@@ -16,23 +24,40 @@ interface SlashState {
 interface SceneEditorProps {
   scene: Scene
   screenplayId: string
+  projectId: string
   onNewScene?: () => void
 }
 
 export function SceneEditor({
   scene,
   screenplayId,
+  projectId,
   onNewScene,
 }: SceneEditorProps) {
   const save = useSceneAutosave(scene, screenplayId)
+  const createAnnotation = useCreateAnnotation(scene.id)
+  const createEntity = useCreateEntity(projectId)
+
   const [slash, setSlash] = useState<SlashState | null>(null)
   const slashRef = useRef<SlashState | null>(null)
   slashRef.current = slash
+
+  // Tag flow (SPEC §27–28): a capture of the selection as offsets plus the
+  // chosen entity type (null while the type menu is showing).
+  const [tag, setTag] = useState<{
+    span: TextSpan
+    left: number
+    top: number
+  } | null>(null)
+  const [tagType, setTagType] = useState<EntityType | null>(null)
+  const tagRef = useRef<{ span: TextSpan } | null>(null)
+  tagRef.current = tag
+
   const onNewSceneRef = useRef(onNewScene)
   onNewSceneRef.current = onNewScene
 
   const editor = useEditor({
-    extensions: getScreenplayExtensions(),
+    extensions: getScreenplayExtensions(scene.id),
     content: scene.content,
     editable: !scene.locked,
     editorProps: {
@@ -49,6 +74,17 @@ export function SceneEditor({
           !slashRef.current
         ) {
           onNewSceneRef.current?.()
+          return true
+        }
+        // Ctrl/Cmd + Shift + T — tag selected text (SPEC §28).
+        if (
+          event.key.toLowerCase() === 't' &&
+          event.shiftKey &&
+          (event.metaKey || event.ctrlKey) &&
+          !slashRef.current &&
+          !tagRef.current
+        ) {
+          openTag(editor)
           return true
         }
         if (slashRef.current) return handleSlashKey(event)
@@ -71,9 +107,24 @@ export function SceneEditor({
     },
   })
 
+  useSemanticDecorations(scene.id, editor)
+
   function openSlash(ed: Exclude<typeof editor, null>) {
     const coords = ed.view.coordsAtPos(ed.state.selection.from)
     setSlash({ query: '', index: 0, left: coords.left, top: coords.bottom + 4 })
+  }
+
+  function openTag(ed: Exclude<typeof editor, null>) {
+    const span = selectionToSpan(ed.state.selection)
+    if (!span) return
+    const coords = ed.view.coordsAtPos(ed.state.selection.from)
+    setTag({ span, left: coords.left, top: coords.bottom + 4 })
+    setTagType(null)
+  }
+
+  function closeTag() {
+    setTag(null)
+    setTagType(null)
   }
 
   function handleSlashKey(event: KeyboardEvent): boolean {
@@ -134,6 +185,36 @@ export function SceneEditor({
     setSlash(null)
   }
 
+  const tagSpan = tag?.span
+  const pickEntity = (entityId: string) => {
+    if (!tagSpan) return
+    createAnnotation.mutate({
+      node_id: tagSpan.node_id,
+      start_offset: tagSpan.start_offset,
+      end_offset: tagSpan.end_offset,
+      entity_id: entityId,
+    })
+    closeTag()
+  }
+
+  const createAndTag = (payload: {
+    entity_type: EntityType
+    canonical_name: string
+  }) => {
+    if (!tagSpan) return
+    createEntity.mutate(payload, {
+      onSuccess: (entity) => {
+        createAnnotation.mutate({
+          node_id: tagSpan.node_id,
+          start_offset: tagSpan.start_offset,
+          end_offset: tagSpan.end_offset,
+          entity_id: entity.id,
+        })
+      },
+    })
+    closeTag()
+  }
+
   useEffect(() => {
     save.editorRef.current = editor
     editor.on('update', save.schedule)
@@ -190,7 +271,11 @@ export function SceneEditor({
           Could not save your changes. They were reverted.
         </p>
       ) : null}
+      <div className="px-8 pt-3">
+        <SuggestionList sceneId={scene.id} projectId={projectId} />
+      </div>
       <EditorContent editor={editor} />
+      <CharacterAutocomplete editor={editor} projectId={projectId} />
       {slash ? (
         <SlashCommandMenu
           items={slashItems(slash.query)}
@@ -201,6 +286,25 @@ export function SceneEditor({
           left={slash.left}
           top={slash.top}
           onSelect={applyElement}
+        />
+      ) : null}
+      {tag && !tagType ? (
+        <TagMenu
+          left={tag.left}
+          top={tag.top}
+          onSelect={(type) => setTagType(type)}
+          onClose={closeTag}
+        />
+      ) : null}
+      {tag && tagType ? (
+        <EntityPicker
+          projectId={projectId}
+          type={tagType}
+          left={tag.left}
+          top={tag.top}
+          onPick={pickEntity}
+          onCreate={createAndTag}
+          onClose={closeTag}
         />
       ) : null}
     </div>

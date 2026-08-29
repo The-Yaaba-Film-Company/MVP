@@ -24,7 +24,7 @@ function defaultSceneContent(): TiptapNode {
 }
 
 export function WriterView() {
-  const { screenplayId } = useParams({ from: WRITER_FROM })
+  const { projectId, screenplayId } = useParams({ from: WRITER_FROM })
   const { data } = useScenes(screenplayId)
   const queryClient = useQueryClient()
   const activeSceneId = useWriterStore((s) => s.activeSceneId)
@@ -167,6 +167,7 @@ export function WriterView() {
             key={active.id}
             scene={active}
             screenplayId={screenplayId}
+            projectId={projectId}
             onNewScene={() => createScene.mutate()}
           />
         ) : (

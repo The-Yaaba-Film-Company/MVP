@@ -233,6 +233,12 @@ export interface CreateAnnotationRequest {
   entity_id: string
 }
 
+export interface CreateEntityRequest {
+  entity_type: EntityType
+  canonical_name: string
+  aliases?: string[]
+}
+
 export interface SearchProjectQuery {
   q?: string
   types?: EntityType[]

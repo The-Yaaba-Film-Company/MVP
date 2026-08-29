@@ -10,6 +10,7 @@
 ## Commands
 
 - `npm run dev` — Vite dev server on **port 3000**.
+- `npm run dev:mock` — same, but with `VITE_API_MOCK=1` so the browser MSW worker (`src/api/mocks/browser.ts`) backs every `/api/*` call against the shared mock handlers — lets the UI run without FastAPI, already signed in. Tests are unaffected (they use `setupServer`).
 - `npm run generate-routes` — regenerates `src/routeTree.gen.ts` from `src/routes/`. Run after adding/moving route files; typecheck fails otherwise.
 - `npm run build`, `npm run preview`. No test framework is configured.
 - `npm run lint` — eslint (TanStack config, no autofix). `npm run format` — prettier `--write` + `eslint --fix`. `npm run check` — prettier `--check`.

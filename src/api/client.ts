@@ -4,6 +4,7 @@ import type {
   Annotation,
   CharacterReport,
   CreateAnnotationRequest,
+  CreateEntityRequest,
   CreateProjectRequest,
   CreateSceneRequest,
   CreateScreenplayRequest,
@@ -139,6 +140,8 @@ export const api = {
       if (query.q) params.q = query.q
       return get<Entity[]>(`/projects/${projectId}/entities`, params)
     },
+    create: (projectId: string, payload: CreateEntityRequest) =>
+      send<Entity>('POST', `/projects/${projectId}/entities`, payload),
     get: (id: string) => get<Entity>(`/entities/${id}`),
     update: (
       id: string,

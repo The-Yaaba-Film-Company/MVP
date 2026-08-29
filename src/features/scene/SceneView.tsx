@@ -6,25 +6,43 @@ import { headingFromContent } from '../writer/heading'
 import { useWriterStore } from '../writer/store'
 import { getScreenplayExtensions } from '../writer/schema'
 import { usePaginationReport } from '../pagination/usePaginationReport'
+import { useSemanticDecorations } from '../semantic/decorations'
+import { SuggestionList } from '../semantic/SuggestionList'
+import { ValidationPanel } from '../validation/ValidationPanel'
 import type { Scene } from '#/api/types'
 
 const SCENE_FROM =
   '/_authenticated/projects/$projectId/screenplays/$screenplayId/scene'
 
-function ReadOnlySceneDoc({ scene }: { scene: Scene }) {
+function ReadOnlySceneDoc({
+  scene,
+  projectId,
+}: {
+  scene: Scene
+  projectId: string
+}) {
   const editor = useEditor({
-    extensions: getScreenplayExtensions(),
+    extensions: getScreenplayExtensions(scene.id),
     content: scene.content,
     editable: false,
     editorProps: {
       attributes: { 'data-testid': 'scene-editor', class: 'outline-none' },
     },
   })
-  return <EditorContent editor={editor} />
+  useSemanticDecorations(scene.id, editor)
+  return (
+    <>
+      <EditorContent editor={editor} />
+      <div className="mt-4 flex flex-col gap-3">
+        <ValidationPanel sceneId={scene.id} editor={editor} />
+        <SuggestionList sceneId={scene.id} projectId={projectId} />
+      </div>
+    </>
+  )
 }
 
 export function SceneView() {
-  const { screenplayId } = useParams({ from: SCENE_FROM })
+  const { projectId, screenplayId } = useParams({ from: SCENE_FROM })
   const { data } = useScenes(screenplayId)
   const { data: pagination } = usePaginationReport(screenplayId)
   const activeSceneId = useWriterStore((s) => s.activeSceneId)
@@ -114,7 +132,11 @@ export function SceneView() {
                 <span className="text-amber-700">Locked</span>
               ) : null}
             </div>
-            <ReadOnlySceneDoc key={scene.id} scene={scene} />
+            <ReadOnlySceneDoc
+              key={scene.id}
+              scene={scene}
+              projectId={projectId}
+            />
           </>
         ) : (
           <p className="text-neutral-500">No scene selected.</p>

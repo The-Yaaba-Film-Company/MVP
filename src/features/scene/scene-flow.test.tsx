@@ -3,7 +3,11 @@ import { http, HttpResponse } from 'msw'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { server } from '#/api/mocks/server'
-import { buildScene } from '#/api/mocks/fixtures'
+import {
+  buildAnnotation,
+  buildScene,
+  buildSuggestion,
+} from '#/api/mocks/fixtures'
 import { renderApp } from '#/test/renderApp'
 import { useWriterStore } from '../writer/store'
 import { setPaginationPublishDebounceMs } from '../pagination/usePaginationReport'
@@ -140,4 +144,114 @@ describe('scene view', () => {
     )
     expect(useWriterStore.getState().activeSceneId).toBe('scene-1')
   })
+})
+
+describe('scene view — semantic overlays', () => {
+  it('overlays annotations + pending suggestions read-only without editing the scene', async () => {
+    server.use(
+      http.get('/api/scenes/scene-1/annotations', () =>
+        HttpResponse.json({
+          items: [
+            buildAnnotation({
+              id: 'annotation-1',
+              node_id: 'scene-1-n',
+              start_offset: 0,
+              end_offset: 4,
+              entity_id: 'entity-1',
+              source: 'manual',
+            }),
+          ],
+        }),
+      ),
+      http.get('/api/scenes/scene-1/ai-suggestions', () =>
+        HttpResponse.json({
+          items: [
+            buildSuggestion({
+              id: 'suggestion-1',
+              scene_id: 'scene-1',
+              node_id: 'scene-1-n',
+              matched_text: 'enters',
+              start_offset: 5,
+              end_offset: 11,
+              suggested_type: 'prop',
+              suggested_name: 'PISTOL',
+              matched_entity_id: 'entity-3',
+              status: 'pending',
+            }),
+          ],
+        }),
+      ),
+    )
+    await renderSceneView()
+
+    const editor = await screen.findByTestId(
+      'scene-editor',
+      {},
+      { timeout: 10_000 },
+    )
+    await waitFor(
+      () => expect(editor.querySelector('.semantic-annotation')).not.toBeNull(),
+      { timeout: 10_000 },
+    )
+    // Solid annotation over "John", dashed suggestion over "enters" (SPEC §59).
+    expect(
+      editor.querySelector('.semantic-annotation[data-span-id="annotation-1"]'),
+    ).toHaveTextContent('John')
+    await waitFor(() =>
+      expect(editor.querySelector('.semantic-suggestion')).not.toBeNull(),
+    )
+    expect(
+      editor.querySelector('.semantic-suggestion[data-span-id="suggestion-1"]'),
+    ).toHaveTextContent('enters')
+    // Read-only: no inline editing, but the review panel is available.
+    expect(editor).toHaveAttribute('contenteditable', 'false')
+    expect(screen.getByTestId('suggestion-list')).toBeInTheDocument()
+    expect(screen.getByTestId('suggestion-accept-suggestion-1')).toBeEnabled()
+    expect(screen.getByTestId('suggestion-reject-suggestion-1')).toBeEnabled()
+    // The scene body text is untouched by the overlays.
+    expect(editor.textContent).toContain('John enters the room.')
+  }, 15_000)
+})
+
+describe('scene view — validation panel', () => {
+  it('lists structural issues with enabled goto buttons', async () => {
+    server.use(
+      http.get('/api/scenes/scene-1/validation', () =>
+        HttpResponse.json({
+          items: [
+            {
+              id: 'v1',
+              type: 'warning' as const,
+              message: 'Dialogue has no associated Character.',
+              node_id: 'scene-1-n',
+            },
+            {
+              id: 'v2',
+              type: 'info' as const,
+              message: 'Scene heading count: 1.',
+              node_id: 'scene-1-h',
+            },
+          ],
+        }),
+      ),
+    )
+    await renderSceneView()
+
+    // Wait for the validation fetch to resolve and the issues to render.
+    const v1 = await screen.findByTestId(
+      'validation-goto-v1',
+      {},
+      { timeout: 10_000 },
+    )
+    const panel = screen.getByTestId('validation-panel')
+    expect(panel).toHaveTextContent('Validation (2)')
+    expect(panel).toHaveTextContent('Dialogue has no associated Character.')
+    expect(panel).toHaveTextContent('Scene heading count: 1')
+    // Editor is passed in, so issue navigation is available in the read-only view.
+    expect(v1).toBeEnabled()
+    expect(screen.getByTestId('validation-goto-v2')).toBeEnabled()
+    // Clicking an issue does not crash the read-only editor.
+    await userEvent.click(screen.getByTestId('validation-goto-v2'))
+    expect(screen.getByTestId('scene-editor')).toBeInTheDocument()
+  }, 15_000)
 })

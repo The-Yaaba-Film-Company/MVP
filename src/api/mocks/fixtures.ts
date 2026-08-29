@@ -113,6 +113,39 @@ export function buildEntity(
   }
 }
 
+export function buildEntities(): Entity[] {
+  return [
+    buildEntity({
+      id: 'entity-1',
+      canonical_name: 'JOHN',
+      aliases: ['John'],
+    }),
+    buildEntity(
+      { id: 'entity-2', canonical_name: 'JOAN', aliases: [] },
+      'character',
+      'JOAN',
+    ),
+    buildEntity(
+      {
+        id: 'entity-3',
+        canonical_name: 'PISTOL',
+        aliases: ['the pistol'],
+      },
+      'prop',
+      'PISTOL',
+    ),
+    buildEntity(
+      {
+        id: 'entity-4',
+        canonical_name: 'POLICE STATION',
+        aliases: [],
+      },
+      'location',
+      'POLICE STATION',
+    ),
+  ]
+}
+
 export function buildAnnotation(
   overrides: Partial<Annotation> = {},
 ): Annotation {
@@ -178,7 +211,7 @@ export function seed(overrides: Partial<Seed> = {}): Seed {
         location_entity_id: null,
       }),
     ],
-    entities: [buildEntity()],
+    entities: buildEntities(),
     annotations: [buildAnnotation()],
     suggestions: [],
     ...overrides,

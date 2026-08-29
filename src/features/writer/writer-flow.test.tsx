@@ -96,8 +96,13 @@ describe('writer view — slash command (SPEC §24)', () => {
   it('opens on "/", filters as you type, and converts the block on Enter', async () => {
     const { editor } = await renderWriter()
 
-    // Place the caret inside the editable action block.
-    await userEvent.click(within(editor).getByText('John enters the room.'))
+    // Place the caret inside the editable action block. Target the block via
+    // data-node-type rather than getByText: the semantic annotation overlay
+    // wraps "John" in a span (splitting the text node), so the unsplit literal
+    // is not a direct text-node child and getByText races with its async load.
+    await userEvent.click(
+      editor.querySelector('[data-node-type="action"]') as HTMLElement,
+    )
 
     pressKey(editor, '/')
     await screen.findByTestId('slash-menu')
@@ -126,7 +131,9 @@ describe('writer view — slash command (SPEC §24)', () => {
 
   it('closes on Escape and drops an empty menu on Backspace', async () => {
     const { editor } = await renderWriter()
-    await userEvent.click(within(editor).getByText('John enters the room.'))
+    await userEvent.click(
+      editor.querySelector('[data-node-type="action"]') as HTMLElement,
+    )
 
     pressKey(editor, '/')
     await screen.findByTestId('slash-menu')

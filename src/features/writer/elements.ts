@@ -21,7 +21,18 @@ export interface SlashItem {
 
 export function slashItems(query: string): SlashItem[] {
   const q = query.trim().toLowerCase()
-  return (['sceneHeading', 'action', 'character', 'dialogue', 'parenthetical', 'transition', 'shot', 'general'] as const)
+  return (
+    [
+      'sceneHeading',
+      'action',
+      'character',
+      'dialogue',
+      'parenthetical',
+      'transition',
+      'shot',
+      'general',
+    ] as const
+  )
     .map((type) => ({ type, label: SCREENPLAY_ELEMENT_LABELS[type] }))
     .filter((item) => !q || item.label.toLowerCase().includes(q))
 }
@@ -40,9 +51,9 @@ export function sourceText(node: PMNode): string {
         node.attrs.modifier as string | null,
       )
     case 'character':
-      return (node.attrs.displayName as string) ?? ''
+      return node.attrs.displayName as string
     case 'transition':
-      return (node.attrs.transitionType as string) ?? ''
+      return node.attrs.transitionType as string
     default:
       return node.textContent
   }

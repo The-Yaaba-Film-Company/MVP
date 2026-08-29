@@ -4,6 +4,7 @@ import {
   createFileRoute,
   useParams,
 } from '@tanstack/react-router'
+import { SearchPanel } from '#/features/search/SearchPanel'
 
 type ViewTo =
   | '/projects/$projectId/screenplays/$screenplayId/writer'
@@ -60,6 +61,7 @@ function ScreenplayLayout() {
             {v.label}
           </Link>
         ))}
+        <SearchPanel projectId={projectId} screenplayId={screenplayId} />
       </nav>
       <main className="flex-1">
         <Outlet />

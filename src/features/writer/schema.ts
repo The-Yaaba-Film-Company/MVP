@@ -2,6 +2,7 @@ import { Node, mergeAttributes } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import { nodeId } from '#/lib/id'
 import { ScreenplayElements } from './screenplayElements'
+import { semanticDecorations } from '../semantic/decorations'
 import type { IntExt } from '#/api/types'
 import { headingText } from './heading'
 
@@ -138,7 +139,10 @@ const transition = Node.create({
   },
 })
 
-export function getScreenplayExtensions() {
+export function getScreenplayExtensions(sceneId?: string) {
+  const extras = sceneId
+    ? [semanticDecorations.configure({ sceneId })]
+    : []
   return [
     StarterKit.configure({
       paragraph: false,
@@ -167,5 +171,6 @@ export function getScreenplayExtensions() {
     textBlock('parenthetical', 'ml-40 pr-8'),
     textBlock('shot', 'ml-32'),
     textBlock('general', ''),
+    ...extras,
   ]
 }

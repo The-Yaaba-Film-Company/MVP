@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw'
 import type { JsonBodyType } from 'msw'
 import { buildAnnotation, seed } from './fixtures'
-import type { Annotation } from '../types'
+import type { Annotation, Entity, EntityType } from '../types'
 
 // Deterministic, non-mutating contract handlers. Feature tests override with
 // `server.use(...)` when they need specific state transitions (401s, 409s, ...).
@@ -62,7 +62,39 @@ export const handlers = [
   http.post('/api/scenes/:id/duplicate', () => json(data.scenes[0])),
 
   // ---- entities ----
-  http.get('/api/projects/:id/entities', () => json(data.entities)),
+  http.get('/api/projects/:id/entities', ({ request }) => {
+    const url = new URL(request.url)
+    const type = url.searchParams.get('type')
+    const q = url.searchParams.get('q')?.trim().toLowerCase()
+    let matches = data.entities
+    if (type) matches = matches.filter((e) => e.entity_type === type)
+    if (q)
+      matches = matches.filter((e) =>
+        [e.canonical_name, ...e.aliases].some((s) =>
+          s.toLowerCase().includes(q),
+        ),
+      )
+    return json(matches)
+  }),
+  http.post('/api/projects/:id/entities', async ({ request }) => {
+    const body = (await request.json()) as {
+      entity_type: EntityType
+      canonical_name: string
+      aliases?: string[]
+    }
+    const entity: Entity = {
+      id: `entity-${Date.now()}`,
+      project_id: 'project-1',
+      entity_type: body.entity_type,
+      canonical_name: body.canonical_name,
+      aliases: body.aliases ?? [],
+      attributes: {},
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+    data.entities.push(entity)
+    return json(entity, 201)
+  }),
   http.get('/api/entities/:id', () => json(data.entities[0])),
   http.patch('/api/entities/:id', () => json(data.entities[0])),
 
@@ -87,12 +119,32 @@ export const handlers = [
   http.get('/api/scenes/:id/ai-suggestions', () =>
     json(items(data.suggestions)),
   ),
-  http.post('/api/ai-suggestions/:id/accept', () =>
-    json(data.suggestions[0] ?? {}),
-  ),
-  http.post('/api/ai-suggestions/:id/reject', () =>
-    json(data.suggestions[0] ?? {}),
-  ),
+  http.post('/api/ai-suggestions/:id/accept', async ({ params }) => {
+    const suggestion = data.suggestions.find((s) => s.id === params.id)
+    if (!suggestion) return json({ detail: 'not found' }, 404)
+    suggestion.status = 'accepted'
+    suggestion.reviewed_at = new Date().toISOString()
+    if (suggestion.start_offset !== null && suggestion.end_offset !== null)
+      data.annotations.push(
+        buildAnnotation({
+          id: `annotation-${Date.now()}`,
+          scene_id: suggestion.scene_id,
+          node_id: suggestion.node_id,
+          start_offset: suggestion.start_offset,
+          end_offset: suggestion.end_offset,
+          entity_id: suggestion.matched_entity_id ?? suggestion.suggested_name,
+          source: 'ai_accepted',
+        }),
+      )
+    return json(suggestion)
+  }),
+  http.post('/api/ai-suggestions/:id/reject', async ({ params }) => {
+    const suggestion = data.suggestions.find((s) => s.id === params.id)
+    if (!suggestion) return json({ detail: 'not found' }, 404)
+    suggestion.status = 'rejected'
+    suggestion.reviewed_at = new Date().toISOString()
+    return json(suggestion)
+  }),
 
   // ---- validation ----
   http.get('/api/scenes/:id/validation', () =>
@@ -164,7 +216,7 @@ export const handlers = [
       items([
         {
           id: 'sr-1',
-          kind: 'prop',
+          kind: 'entity' as const,
           match: 'pistol',
           snippet: 'carrying...pistol.',
           scene_id: 'scene-1',

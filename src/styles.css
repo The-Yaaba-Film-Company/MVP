@@ -13,3 +13,25 @@ body,
 body {
   margin: 0;
 }
+
+/* Semantic overlays (SPEC §46, §59): solid for confirmed annotations,
+   dashed/ghost for pending AI suggestions. Rendered by ProseMirror
+   Decoration.inline — the underlying scene text is never modified. */
+.semantic-annotation {
+  background: rgba(245, 158, 11, 0.25);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.7);
+  border-radius: 2px;
+}
+
+.semantic-suggestion {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(96, 165, 250, 0.35) 0 4px,
+    rgba(96, 165, 250, 0.12) 4px 8px
+  );
+  border-radius: 2px;
+}
+
+.semantic-suggestion:hover {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.8);
+}

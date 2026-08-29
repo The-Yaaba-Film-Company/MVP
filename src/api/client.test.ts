@@ -131,6 +131,102 @@ describe('api client contract', () => {
     expect(items[0].id).toBe('scene-1')
     expect(items[0].content.type).toBe('doc')
   })
+
+  it('returns scene validation issues from GET /scenes/:id/validation', async () => {
+    const issues = [
+      {
+        id: 'v1',
+        type: 'warning' as const,
+        message: 'Dialogue has no associated Character.',
+        node_id: 'n99',
+      },
+    ]
+    server.use(
+      http.get('/api/scenes/scene-1/validation', () =>
+        HttpResponse.json({ items: issues }),
+      ),
+    )
+    await expect(api.validation.scene('scene-1')).resolves.toEqual({
+      items: issues,
+    })
+  })
+
+  it('serializes search query params (q + types joined) on GET /projects/:id/search', async () => {
+    let seen: { q: string | null; types: string | null } | null = null
+    server.use(
+      http.get('/api/projects/project-1/search', ({ request }) => {
+        const params = new URL(request.url).searchParams
+        seen = { q: params.get('q'), types: params.get('types') }
+        return HttpResponse.json({
+          items: [
+            {
+              id: 'sr-1',
+              kind: 'entity',
+              match: 'pistol',
+              snippet: '…pistol.',
+              scene_id: 'scene-1',
+              node_id: 'n1',
+              start_offset: 17,
+              end_offset: 23,
+            },
+          ],
+        })
+      }),
+    )
+    const { items } = await api.search.project('project-1', {
+      q: 'pistol',
+      types: ['prop', 'character'],
+    })
+    expect(items[0].id).toBe('sr-1')
+    expect(seen).toEqual({ q: 'pistol', types: 'prop,character' })
+  })
+
+  it('omits types param on search when no types are given', async () => {
+    let seenTypes: string | null = 'sentinel'
+    let seenQ: string | null = null
+    server.use(
+      http.get('/api/projects/project-1/search', ({ request }) => {
+        const params = new URL(request.url).searchParams
+        seenQ = params.get('q')
+        seenTypes = params.get('types')
+        return HttpResponse.json({ items: [] })
+      }),
+    )
+    await api.search.project('project-1', { q: 'john' })
+    expect(seenQ).toBe('john')
+    expect(seenTypes).toBeNull()
+  })
+
+  it('creates an entity via POST /projects/:id/entities with CSRF', async () => {
+    document.cookie = 'csrf_token=csrf-xyz; path=/'
+    const created = {
+      id: 'entity-9',
+      project_id: 'project-1',
+      entity_type: 'prop',
+      canonical_name: 'GUN',
+      aliases: [],
+      attributes: {},
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    }
+    let seen: string | null = null
+    let body: unknown = null
+    server.use(
+      http.post('/api/projects/project-1/entities', async ({ request }) => {
+        seen = request.headers.get('x-csrf-token')
+        body = await request.json()
+        return HttpResponse.json(created, { status: 201 })
+      }),
+    )
+    await expect(
+      api.entities.create('project-1', {
+        entity_type: 'prop',
+        canonical_name: 'GUN',
+      }),
+    ).resolves.toEqual(created)
+    expect(seen).toBe('csrf-xyz')
+    expect(body).toEqual({ entity_type: 'prop', canonical_name: 'GUN' })
+  })
 })
 
 const sceneFixture: Scene = {

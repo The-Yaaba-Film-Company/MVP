@@ -10,4 +10,5 @@ dist-ssr
 .output
 .vinxi
 __unconfig*
-todos.json
+todos.jsontest-results
+playwright-report
