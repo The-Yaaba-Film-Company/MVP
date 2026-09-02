@@ -125,8 +125,11 @@ describe('writer view — slash command (SPEC §24)', () => {
     await waitFor(() =>
       expect(screen.queryByTestId('slash-menu')).not.toBeInTheDocument(),
     )
-    const character = within(editor).getByText('JOHN ENTERS THE ROOM.')
-    expect(character.closest('[data-node-type="character"]')).not.toBeNull()
+    const character = editor.querySelector('[data-node-type="character"]')
+    expect(character).toHaveTextContent('JOHN ENTERS THE ROOM.')
+    expect(
+      (character as HTMLElement).closest('[data-node-type="character"]'),
+    ).not.toBeNull()
   }, 10_000)
 
   it('closes on Escape and drops an empty menu on Backspace', async () => {

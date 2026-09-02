@@ -212,3 +212,74 @@ describe('smart Enter (SPEC §22)', () => {
     expect(doc.content[1].type).toBe('action')
   })
 })
+
+describe('element rendering (screenplay style)', () => {
+  it('centers and bolds character, wrapping the label in parentheses', () => {
+    const editor = makeEditor({
+      type: 'doc',
+      content: [
+        block('character', { displayName: 'JOHN', characterId: null }),
+        block('character', {
+          displayName: 'JOHN',
+          characterId: null,
+          extension: 'V.O.',
+        }),
+      ],
+    })
+
+    const [plain, voiced] = Array.from(
+      editor.view.dom.querySelectorAll('[data-node-type="character"]'),
+    ) as [HTMLElement, HTMLElement]
+    expect(plain.className).toContain('text-center')
+    expect(plain.className).toContain('font-bold')
+    expect(plain.textContent).toBe('(JOHN)')
+    expect(voiced.className).toContain('text-center')
+    expect(voiced.className).toContain('font-bold')
+    expect(voiced.textContent).toBe('(JOHN (V.O.))')
+  })
+
+  it('centers dialogue within its indent band', () => {
+    const editor = makeEditor({
+      type: 'doc',
+      content: [block('dialogue', { id: 'n1' }, [text('Hello.')])],
+    })
+
+    const node = editor.view.dom.querySelector(
+      '[data-node-type="dialogue"]',
+    ) as HTMLElement
+    expect(node.className).toContain('text-center')
+    expect(node.className).toContain('ml-32')
+  })
+
+  it('bolds and right-aligns transitions', () => {
+    const editor = makeEditor({
+      type: 'doc',
+      content: [block('transition', { transitionType: 'CUT TO:' })],
+    })
+
+    const node = editor.view.dom.querySelector(
+      '[data-node-type="transition"]',
+    ) as HTMLElement
+    expect(node.className).toContain('text-right')
+    expect(node.className).toContain('font-bold')
+  })
+
+  it('bolds and left-aligns scene headings', () => {
+    const editor = makeEditor({
+      type: 'doc',
+      content: [
+        block('sceneHeading', {
+          intExt: 'INT',
+          location: 'POLICE STATION',
+          timeOfDay: 'NIGHT',
+        }),
+      ],
+    })
+
+    const node = editor.view.dom.querySelector(
+      '[data-node-type="sceneHeading"]',
+    ) as HTMLElement
+    expect(node.className).toContain('text-left')
+    expect(node.className).toContain('font-bold')
+  })
+})

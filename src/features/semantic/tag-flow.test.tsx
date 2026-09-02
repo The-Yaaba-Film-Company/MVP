@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { server } from '#/api/mocks/server'
 import { buildAnnotation } from '#/api/mocks/fixtures'
 import { renderApp } from '#/test/renderApp'
+import type { Annotation } from '#/api/types'
 
 const WRITER = '/projects/project-1/screenplays/screenplay-1/writer'
 
@@ -222,6 +223,49 @@ describe('writer view — tagging text (SPEC §27–28)', () => {
       { timeout: 10_000 },
     )
     // Text still intact — semantic span is an overlay, never scene content.
+    expect(editor.querySelector('[data-node-type="action"]')).toHaveTextContent(
+      'John enters the room.',
+    )
+  }, 15_000)
+
+  it('rolls back the annotation overlay when the server rejects the POST', async () => {
+    server.use(
+      http.post('/api/scenes/scene-1/annotations', () =>
+        HttpResponse.json({ detail: 'conflict' }, { status: 409 }),
+      ),
+    )
+    const { queryClient } = await renderApp({
+      initialEntries: [WRITER],
+    })
+    const editor = await screen.findByTestId(
+      'scene-editor',
+      {},
+      { timeout: 10_000 },
+    )
+
+    await selectJohn(editor)
+    pressKey(editor, 't', { ctrlKey: true, shiftKey: true })
+
+    await screen.findByTestId('tag-menu')
+    fireEvent.mouseDown(screen.getByTestId('tag-item-prop'))
+
+    await screen.findByTestId('entity-picker')
+    fireEvent.mouseDown(await screen.findByTestId('entity-option-entity-3'))
+
+    // After the failed POST the optimistic annotation is rolled back: the
+    // cache returns to its pre-mutation snapshot (only the seed annotation-1).
+    await waitFor(
+      () => {
+        const data = queryClient.getQueryData<{ items: Annotation[] }>([
+          'scene',
+          'scene-1',
+          'annotations',
+        ])
+        expect(data?.items.map((a) => a.id)).toEqual(['annotation-1'])
+      },
+      { timeout: 10_000 },
+    )
+    // Text is never touched.
     expect(editor.querySelector('[data-node-type="action"]')).toHaveTextContent(
       'John enters the room.',
     )

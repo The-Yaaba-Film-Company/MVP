@@ -215,6 +215,71 @@ describe('writer view — AI review (SPEC §26, §5.2)', () => {
     )
     expect(editor.querySelector('.semantic-suggestion')).not.toBeNull()
   }, 15_000)
+
+  it('rolls back the accept when the server rejects it: suggestion stays pending, no annotation', async () => {
+    seedPendingSuggestion()
+    server.use(
+      http.post('/api/ai-suggestions/suggestion-1/accept', () =>
+        HttpResponse.json({ detail: 'conflict' }, { status: 409 }),
+      ),
+      http.get('/api/scenes/scene-1/annotations', () =>
+        HttpResponse.json({ items: [buildAnnotation({ id: 'annotation-1' })] }),
+      ),
+    )
+    const { editor } = await renderWriter()
+
+    await screen.findByTestId(
+      'suggestion-suggestion-1',
+      {},
+      { timeout: 10_000 },
+    )
+
+    fireEvent.click(screen.getByTestId('suggestion-accept-suggestion-1'))
+
+    // Failed accept rolls the suggestion back to pending and no solid
+    // annotation for it exists.
+    await waitFor(
+      () =>
+        expect(
+          screen.getByTestId('suggestion-suggestion-1'),
+        ).toBeInTheDocument(),
+      { timeout: 10_000 },
+    )
+    expect(
+      editor.querySelector('.semantic-suggestion[data-span-id="suggestion-1"]'),
+    ).not.toBeNull()
+    expect(
+      editor.querySelector('.semantic-annotation[data-span-id="ann-"]'),
+    ).toBeNull()
+  }, 15_000)
+
+  it('rolls back the reject when the server rejects it: suggestion stays pending', async () => {
+    seedPendingSuggestion()
+    server.use(
+      http.post('/api/ai-suggestions/suggestion-1/reject', () =>
+        HttpResponse.json({ detail: 'conflict' }, { status: 409 }),
+      ),
+    )
+    const { editor } = await renderWriter()
+
+    await screen.findByTestId(
+      'suggestion-suggestion-1',
+      {},
+      { timeout: 10_000 },
+    )
+
+    fireEvent.click(screen.getByTestId('suggestion-reject-suggestion-1'))
+
+    // Failed reject rolls the suggestion back to pending.
+    await waitFor(
+      () =>
+        expect(
+          screen.getByTestId('suggestion-suggestion-1'),
+        ).toBeInTheDocument(),
+      { timeout: 10_000 },
+    )
+    expect(editor.querySelector('.semantic-suggestion')).not.toBeNull()
+  }, 15_000)
 })
 
 it('buildSuggestion offsets match the annotated span so overlays align', () => {

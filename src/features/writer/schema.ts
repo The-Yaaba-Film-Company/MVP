@@ -70,7 +70,7 @@ const sceneHeading = Node.create({
       'div',
       mergeAttributes(HTMLAttributes, {
         'data-node-type': 'sceneHeading',
-        class: 'font-semibold uppercase tracking-wide',
+        class: 'text-left font-bold uppercase tracking-wide',
       }),
       headingText(
         attrs.intExt,
@@ -108,9 +108,9 @@ const character = Node.create({
       'div',
       mergeAttributes(HTMLAttributes, {
         'data-node-type': 'character',
-        class: 'font-bold',
+        class: 'text-center font-bold',
       }),
-      label,
+      `(${label})`,
     ]
   },
 })
@@ -132,7 +132,7 @@ const transition = Node.create({
       'div',
       mergeAttributes(HTMLAttributes, {
         'data-node-type': 'transition',
-        class: 'text-right uppercase',
+        class: 'text-right font-bold uppercase',
       }),
       (node.attrs.transitionType as string | null) ?? 'CUT TO:',
     ]
@@ -140,9 +140,7 @@ const transition = Node.create({
 })
 
 export function getScreenplayExtensions(sceneId?: string) {
-  const extras = sceneId
-    ? [semanticDecorations.configure({ sceneId })]
-    : []
+  const extras = sceneId ? [semanticDecorations.configure({ sceneId })] : []
   return [
     StarterKit.configure({
       paragraph: false,
@@ -167,7 +165,7 @@ export function getScreenplayExtensions(sceneId?: string) {
     character,
     transition,
     textBlock('action', 'pl-12'),
-    textBlock('dialogue', 'ml-32 mr-10 pl-8 pr-8'),
+    textBlock('dialogue', 'ml-32 mr-10 pl-8 pr-8 text-center'),
     textBlock('parenthetical', 'ml-40 pr-8'),
     textBlock('shot', 'ml-32'),
     textBlock('general', ''),

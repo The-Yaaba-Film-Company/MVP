@@ -7,6 +7,9 @@ import { defineConfig } from '@playwright/test'
 // stripped from the production bundle).
 export default defineConfig({
   testDir: 'e2e',
+  // `e2e/real/` needs a live FastAPI backend (playwright.real.config.ts); the
+  // default mock-stack suite must not run it.
+  testIgnore: '**/real/**',
   timeout: 30_000,
   use: {
     // Reuse the system Chrome so no browser download is required.
