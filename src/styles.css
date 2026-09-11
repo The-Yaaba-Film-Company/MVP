@@ -1,37 +1,148 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
-* {
-  box-sizing: border-box;
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * "Story Room" design system — earthy production-office palette
+ * (SPEC §8–9. Mirrors the reference project's tokens.)
+ */
+
+@theme {
+  /* Paper / parchment neutrals */
+  --color-paper-50: #faf6ef;
+  --color-paper-100: #f3ebdd;
+  --color-paper-200: #e8dcc8;
+  --color-paper-300: #d8c7a8;
+
+  /* Ink neutrals */
+  --color-ink-900: #2b2420;
+  --color-ink-700: #4a4038;
+  --color-ink-500: #6f6255;
+  --color-ink-300: #a79a8b;
+
+  /* Clay — primary accent */
+  --color-clay-700: #93401f;
+  --color-clay-600: #b5502f;
+  --color-clay-500: #c2603d;
+  --color-clay-100: #f3ddd1;
+
+  /* Olive — confirmed / success */
+  --color-olive-600: #5c6b36;
+  --color-olive-500: #6b7a3f;
+  --color-olive-100: #e4e8d3;
+
+  /* Ochre — pending / AI suggested */
+  --color-ochre-600: #a8721f;
+  --color-ochre-500: #c68a2e;
+  --color-ochre-100: #f3e4c4;
+
+  /* Rust — alerts */
+  --color-rust-600: #9c4a3c;
+  --color-rust-100: #f1dad4;
+
+  /* Verdigris — info */
+  --color-verdigris-600: #4b7a72;
+  --color-verdigris-100: #dce9e6;
+
+  /* Plum — vfx */
+  --color-plum-600: #6e4a5c;
+  --color-plum-100: #ece0e5;
+
+  --font-sans: 'Work Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Fraunces', ui-serif, Georgia, serif;
+  --font-script: 'Courier Prime', 'Courier New', Courier, monospace;
+
+  --radius-lg: 0.5rem;
 }
 
-html,
-body,
-#app {
-  min-height: 100%;
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 }
 
-body {
-  margin: 0;
+:root {
+  --radius: 0.5rem;
+  --background: #faf6ef;
+  --foreground: #2b2420;
+  --card: #ffffff;
+  --card-foreground: #2b2420;
+  --popover: #ffffff;
+  --popover-foreground: #2b2420;
+  --primary: #b5502f;
+  --primary-foreground: #faf6ef;
+  --secondary: #f3ebdd;
+  --secondary-foreground: #4a4038;
+  --muted: #f3ebdd;
+  --muted-foreground: #6f6255;
+  --accent: #e8dcc8;
+  --accent-foreground: #2b2420;
+  --destructive: #9c4a3c;
+  --destructive-foreground: #faf6ef;
+  --border: #e8dcc8;
+  --input: #d8c7a8;
+  --ring: #b5502f;
 }
 
-/* Semantic overlays (SPEC §46, §59): solid for confirmed annotations,
-   dashed/ghost for pending AI suggestions. Rendered by ProseMirror
-   Decoration.inline — the underlying scene text is never modified. */
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-clay-600);
+    outline-offset: 2px;
+  }
+}
+
+/*
+ * Screenplay body geometry — fixed-pitch Courier at 12pt metrics.
+ * Page/runtime estimates depend on this exact geometry; do not change.
+ */
+@utility script-body {
+  font-family: var(--font-script);
+  font-size: 12pt;
+  line-height: 1;
+}
+
+/* Dual-highlight system (SPEC §59): solid = confirmed annotation,
+   dashed = AI pending. Rendered by ProseMirror Decoration.inline — the
+   underlying scene text is never modified. */
 .semantic-annotation {
-  background: rgba(245, 158, 11, 0.25);
-  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.7);
-  border-radius: 2px;
+  border-bottom: 2px solid var(--color-clay-500);
+  background-color: color-mix(in srgb, var(--color-clay-100) 70%, transparent);
 }
 
 .semantic-suggestion {
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(96, 165, 250, 0.35) 0 4px,
-    rgba(96, 165, 250, 0.12) 4px 8px
-  );
-  border-radius: 2px;
-}
-
-.semantic-suggestion:hover {
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.8);
+  border-bottom: 2px dashed var(--color-ochre-500);
+  background-color: color-mix(in srgb, var(--color-ochre-100) 60%, transparent);
 }

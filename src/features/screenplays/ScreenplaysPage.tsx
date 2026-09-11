@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
+import { ChevronLeft } from 'lucide-react'
 import { api } from '#/api/client'
 import {
   useProjectScreenplays,
@@ -39,21 +40,21 @@ export function ScreenplaysPage() {
   const screenplays = screenplaysQuery.data ?? []
 
   return (
-    <div data-testid="screenplays-page" className="p-8">
-      <div className="mb-6">
+    <div data-testid="screenplays-page" className="mx-auto max-w-6xl p-8">
+      <div className="mb-8">
         <Link
           to="/"
-          className="text-sm text-neutral-500 hover:text-neutral-700"
+          className="inline-flex items-center gap-1 text-sm text-ink-500 hover:text-clay-700"
         >
-          ← All projects
+          <ChevronLeft className="size-4" aria-hidden /> All projects
         </Link>
-        <div className="mt-2 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Screenplays</h1>
+        <div className="mt-3 flex items-center justify-between">
+          <h1 className="font-serif text-3xl text-ink-900">Screenplays</h1>
           <button
             type="button"
             data-testid="new-screenplay-button"
             onClick={() => setCreating((v) => !v)}
-            className="rounded bg-neutral-900 px-4 py-2 text-white"
+            className="rounded-md bg-clay-600 px-4 py-2 text-sm font-medium text-paper-50 transition-colors hover:bg-clay-700"
           >
             New Screenplay
           </button>
@@ -64,15 +65,15 @@ export function ScreenplaysPage() {
         <form
           data-testid="screenplay-create-form"
           onSubmit={onSubmit}
-          className="mb-6 flex items-end gap-3 rounded border border-neutral-200 p-4"
+          className="mb-6 flex items-end gap-3 rounded-lg border border-paper-200 bg-white p-4 shadow-sm"
         >
           <label className="flex flex-1 flex-col gap-1">
-            Title
+            <span className="text-sm font-medium text-ink-900">Title</span>
             <input
               data-testid="screenplay-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="rounded border border-neutral-300 px-3 py-2"
+              className="h-9 rounded-md border border-paper-300 bg-white px-3 text-sm shadow-sm focus:border-clay-500 focus:outline-none focus:ring-1 focus:ring-clay-500"
               required
             />
           </label>
@@ -80,7 +81,7 @@ export function ScreenplaysPage() {
             type="submit"
             data-testid="screenplay-create-submit"
             disabled={create.isPending}
-            className="rounded bg-neutral-900 px-4 py-2 text-white disabled:opacity-50"
+            className="h-9 rounded-md bg-clay-600 px-4 py-2 text-sm font-medium text-paper-50 transition-colors hover:bg-clay-700 disabled:opacity-50"
           >
             {create.isPending ? 'Creating…' : 'Create'}
           </button>
@@ -88,7 +89,7 @@ export function ScreenplaysPage() {
       ) : null}
 
       {screenplays.length === 0 ? (
-        <p className="text-neutral-600">
+        <p className="text-ink-500">
           No screenplays yet. Create one to start writing.
         </p>
       ) : (
@@ -104,10 +105,12 @@ export function ScreenplaysPage() {
                     params: { projectId, screenplayId: screenplay.id },
                   })
                 }
-                className="w-full rounded border border-neutral-200 p-4 text-left hover:border-neutral-400"
+                className="w-full rounded-lg border border-paper-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-clay-500"
               >
-                <span className="block font-medium">{screenplay.title}</span>
-                <span className="mt-1 block text-xs text-neutral-500">
+                <span className="block font-serif text-lg font-medium text-ink-900">
+                  {screenplay.title}
+                </span>
+                <span className="mt-1 block text-xs text-ink-500">
                   {screenplay.locked_at ? 'Locked' : 'Draft'}
                 </span>
               </button>

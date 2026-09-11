@@ -52,7 +52,9 @@ test.describe('real writer flow', () => {
       `/screenplays/${screenplayId}/scenes`,
     )
     expect(scenes.items.length).toBeGreaterThan(0)
-    await expect(page.getByTestId(`scene-item-${scenes.items[0].id}`)).toBeVisible()
+    await expect(
+      page.getByTestId(`scene-item-${scenes.items[0].id}`),
+    ).toBeVisible()
   })
 
   test('reloading the projects page keeps the logged-in session', async ({

@@ -171,12 +171,16 @@ export function useCreateEntity(projectId: string) {
 
 export function useAnalyzeScene(sceneId: string) {
   const queryClient = useQueryClient()
+  const key = semanticKeys.aiSuggestions(sceneId)
   return useMutation({
     mutationFn: () => api.ai.suggest(sceneId),
+    onSuccess: (data) => {
+      console.log(data)
+      // Surface the API response immediately instead of waiting on a refetch.
+      queryClient.setQueryData(key, data)
+    },
     onSettled: () => {
-      void queryClient.invalidateQueries({
-        queryKey: semanticKeys.aiSuggestions(sceneId),
-      })
+      void queryClient.invalidateQueries({ queryKey: key })
     },
     onError: (error) => {
       console.error('Failed to analyze scene:', error)

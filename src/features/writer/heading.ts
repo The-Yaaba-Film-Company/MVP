@@ -43,3 +43,31 @@ export function headingFromContent(content: TiptapNode): string {
   const a = headingAttrsFromContent(content)
   return headingText(a.intExt, a.location, a.timeOfDay, a.modifier)
 }
+
+const INT_EXT_PREFIXES: Array<[RegExp, IntExt]> = [
+  [/^INT\.?\s*\/\s*EXT\.?/, 'INT_EXT'],
+  [/^INT\./, 'INT'],
+  [/^EXT\./, 'EXT'],
+  [/^INT(?=\s|$)/, 'INT'],
+  [/^EXT(?=\s|$)/, 'EXT'],
+]
+
+/**
+ * Detect a leading INT/EXT marker in heading text (e.g. `EXT. PARK - NIGHT` ->
+ * `{ intExt: 'EXT', location: 'PARK - NIGHT' }`). The marker is stripped from
+ * the remaining location; unmatched text defaults to `INT`.
+ */
+export function parseIntExtPrefix(text: string): {
+  intExt: IntExt
+  location: string
+} {
+  const trimmed = text.trim()
+  const upper = trimmed.toUpperCase()
+  for (const [pattern, intExt] of INT_EXT_PREFIXES) {
+    const match = upper.match(pattern)
+    if (match) {
+      return { intExt, location: trimmed.slice(match[0].length).trim() }
+    }
+  }
+  return { intExt: 'INT', location: trimmed }
+}

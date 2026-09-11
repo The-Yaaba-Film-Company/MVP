@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { api } from '#/api/client'
 import { isApiError } from '#/api/errors'
 import { authKeys } from './queries'
@@ -33,55 +33,82 @@ export function LoginPage() {
     : null
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-6 p-4">
-      <h1 className="text-2xl font-bold">Sign in</h1>
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={onSubmit}
-        data-testid="login-form"
-      >
-        <label className="flex flex-col gap-1">
-          Email
-          <input
-            type="email"
-            data-testid="login-email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            className="rounded border border-neutral-300 px-3 py-2"
-            required
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          Password
-          <input
-            type="password"
-            data-testid="login-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            className="rounded border border-neutral-300 px-3 py-2"
-            required
-          />
-        </label>
-        {errorMessage ? (
-          <p
-            role="alert"
-            data-testid="login-error"
-            className="text-sm text-red-600"
-          >
-            {errorMessage}
+    <main className="flex min-h-screen items-center justify-center bg-paper-50 px-4 py-12">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-clay-700">
+            Yaaba Film Company
           </p>
-        ) : null}
-        <button
-          type="submit"
-          data-testid="login-submit"
-          disabled={mutation.isPending}
-          className="rounded bg-neutral-900 px-4 py-2 text-white disabled:opacity-50"
-        >
-          {mutation.isPending ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
+          <h1 className="mt-1 font-serif text-3xl text-ink-900">
+            The Story Room
+          </h1>
+          <p className="mt-2 text-sm text-ink-500">
+            Sign in to your writing room.
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-paper-300 bg-white p-6">
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={onSubmit}
+            data-testid="login-form"
+          >
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-ink-900">Email</span>
+              <input
+                type="email"
+                data-testid="login-email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                placeholder="you@studio.com"
+                className="h-9 rounded-md border border-paper-300 bg-white px-3 text-sm shadow-sm focus:border-clay-500 focus:outline-none focus:ring-1 focus:ring-clay-500"
+                required
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-ink-900">Password</span>
+              <input
+                type="password"
+                data-testid="login-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                placeholder="••••••••"
+                className="h-9 rounded-md border border-paper-300 bg-white px-3 text-sm shadow-sm focus:border-clay-500 focus:outline-none focus:ring-1 focus:ring-clay-500"
+                required
+              />
+            </label>
+            {errorMessage ? (
+              <p
+                role="alert"
+                data-testid="login-error"
+                className="text-sm font-medium text-rust-600"
+              >
+                {errorMessage}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              data-testid="login-submit"
+              disabled={mutation.isPending}
+              className="h-9 rounded-md bg-clay-600 px-4 py-2 text-sm font-medium text-paper-50 transition-colors hover:bg-clay-700 disabled:opacity-50"
+            >
+              {mutation.isPending ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-ink-500">
+          New to the Story Room?{' '}
+          <Link
+            to="/register"
+            className="font-medium text-clay-700 hover:underline"
+          >
+            Create an account
+          </Link>
+        </p>
+      </div>
     </main>
   )
 }

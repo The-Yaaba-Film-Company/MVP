@@ -1,12 +1,14 @@
 import { useEffect, useMemo } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams } from '@tanstack/react-router'
+import { ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import { api } from '#/api/client'
 import { useScenes, sceneKeys } from './queries'
 import { useWriterStore } from './store'
 import { SceneEditor } from './SceneEditor'
 import { headingFromContent } from './heading'
 import type { Scene, TiptapNode } from '#/api/types'
+import { cn } from '#/lib/utils'
 
 const WRITER_FROM =
   '/_authenticated/projects/$projectId/screenplays/$screenplayId/writer'
@@ -82,10 +84,10 @@ export function WriterView() {
     <div data-testid="writer-view" className="flex min-h-screen">
       <aside
         data-testid="scene-navigator"
-        className="w-72 shrink-0 border-r border-neutral-200 bg-neutral-50"
+        className="w-72 shrink-0 border-r border-paper-200 bg-paper-100"
       >
-        <div className="flex items-center justify-between px-4 py-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
+        <div className="flex items-center justify-between border-b border-paper-200 px-4 py-3">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-clay-700">
             Scenes
           </h2>
           <button
@@ -93,13 +95,14 @@ export function WriterView() {
             data-testid="new-scene-button"
             onClick={() => createScene.mutate()}
             disabled={createScene.isPending}
-            className="rounded bg-neutral-900 px-2.5 py-1 text-xs text-white disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-md bg-clay-600 px-2 py-1 text-xs font-medium text-paper-50 hover:bg-clay-700 disabled:opacity-50"
           >
-            {createScene.isPending ? 'Adding…' : '+ Scene'}
+            <Plus className="size-3" aria-hidden />
+            {createScene.isPending ? 'Adding…' : 'Scene'}
           </button>
         </div>
         {sorted.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-neutral-500">
+          <p className="px-4 py-6 text-sm text-ink-500">
             No scenes yet. Add your first scene.
           </p>
         ) : (
@@ -109,20 +112,21 @@ export function WriterView() {
               return (
                 <li key={scene.id}>
                   <div
-                    className={`flex items-stretch border-b border-neutral-100 ${
-                      isActive ? 'bg-white' : 'hover:bg-white/60'
-                    }`}
+                    className={cn(
+                      'flex items-stretch border-b border-paper-200',
+                      isActive ? 'bg-paper-50' : 'hover:bg-paper-50/60',
+                    )}
                   >
-                    <div className="flex flex-col justify-between py-1 pl-2">
+                    <div className="flex flex-col justify-between py-1 pl-1.5">
                       <button
                         type="button"
                         aria-label={`Move ${scene.number ?? 'scene'} up`}
                         data-testid={`scene-move-up-${scene.id}`}
                         disabled={index === 0 || reorderScene.isPending}
                         onClick={() => moveScene(scene.id, 'up')}
-                        className="px-1 text-xs text-neutral-400 hover:text-neutral-900 disabled:opacity-30"
+                        className="px-1 text-xs text-ink-400 hover:text-clay-700 disabled:opacity-30"
                       >
-                        ▲
+                        <ChevronUp className="size-3" aria-hidden />
                       </button>
                       <button
                         type="button"
@@ -132,9 +136,9 @@ export function WriterView() {
                           index === sorted.length - 1 || reorderScene.isPending
                         }
                         onClick={() => moveScene(scene.id, 'down')}
-                        className="px-1 text-xs text-neutral-400 hover:text-neutral-900 disabled:opacity-30"
+                        className="px-1 text-xs text-ink-400 hover:text-clay-700 disabled:opacity-30"
                       >
-                        ▼
+                        <ChevronDown className="size-3" aria-hidden />
                       </button>
                     </div>
                     <button
@@ -143,14 +147,16 @@ export function WriterView() {
                       onClick={() => setActiveSceneId(scene.id)}
                       className="flex min-w-0 flex-1 items-baseline gap-2 px-2 py-2.5 text-left"
                     >
-                      <span className="w-7 shrink-0 text-right text-xs font-semibold text-neutral-400">
+                      <span className="w-7 shrink-0 text-right text-xs font-semibold text-clay-700">
                         {scene.number ?? '–'}
                       </span>
-                      <span className="truncate text-sm">
+                      <span className="truncate text-sm text-ink-900">
                         {headingFromContent(scene.content)}
                       </span>
                       {scene.locked ? (
-                        <span className="text-xs text-amber-600">Locked</span>
+                        <span className="rounded border border-ochre-600/40 bg-ochre-100 px-1 text-xs text-ochre-600">
+                          Locked
+                        </span>
                       ) : null}
                     </button>
                   </div>
@@ -161,7 +167,7 @@ export function WriterView() {
         )}
       </aside>
 
-      <section className="min-w-0 flex-1">
+      <section className="flex min-w-0 flex-1 flex-col">
         {active ? (
           <SceneEditor
             key={active.id}
@@ -171,7 +177,7 @@ export function WriterView() {
             onNewScene={() => createScene.mutate()}
           />
         ) : (
-          <div className="px-8 py-16 text-neutral-500">
+          <div className="px-8 py-16 text-ink-500">
             Select a scene to start writing.
           </div>
         )}{' '}

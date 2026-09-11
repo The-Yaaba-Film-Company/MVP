@@ -8,29 +8,32 @@ export async function apiFetch<T>(
   path: string,
   init: { method?: string; body?: unknown } = {},
 ): Promise<T> {
-  return page.evaluate(async (args) => {
-    const { path: p, method, body } = args
-    const csrf = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/)?.[1]
-    const res = await fetch(`http://localhost:8001/api${p}`, {
-      method: method ?? 'GET',
-      credentials: 'include',
-      headers: {
-        accept: 'application/json',
-        ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
-        ...(method && method !== 'GET' && csrf
-          ? { 'X-CSRF-Token': decodeURIComponent(csrf) }
-          : {}),
-      },
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    })
-    if (!res.ok) {
-      throw new Error(
-        `${method ?? 'GET'} ${p} -> ${res.status}: ${await res.text()}`,
-      )
-    }
-    if (res.status === 204) return undefined as T
-    return (await res.json()) as T
-  }, { path, method: init.method, body: init.body })
+  return page.evaluate(
+    async (args) => {
+      const { path: p, method, body } = args
+      const csrf = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/)?.[1]
+      const res = await fetch(`http://localhost:8001/api${p}`, {
+        method: method ?? 'GET',
+        credentials: 'include',
+        headers: {
+          accept: 'application/json',
+          ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
+          ...(method && method !== 'GET' && csrf
+            ? { 'X-CSRF-Token': decodeURIComponent(csrf) }
+            : {}),
+        },
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      })
+      if (!res.ok) {
+        throw new Error(
+          `${method ?? 'GET'} ${p} -> ${res.status}: ${await res.text()}`,
+        )
+      }
+      if (res.status === 204) return undefined as T
+      return (await res.json()) as T
+    },
+    { path, method: init.method, body: init.body },
+  )
 }
 
 export function uniqueEmail(): string {
@@ -77,10 +80,7 @@ export async function waitForSceneText(
   await pollApi<{ items: Array<{ id: string; content: unknown }> }>(
     page,
     `/screenplays/${screenplayId}/scenes`,
-    (res) =>
-      res.items.some((s) =>
-        JSON.stringify(s.content).includes(phrase),
-      ),
+    (res) => res.items.some((s) => JSON.stringify(s.content).includes(phrase)),
   )
 }
 
@@ -96,7 +96,9 @@ export async function registerViaUi(
   await expect(page.getByTestId('register-form')).toBeVisible()
   await page.getByTestId('register-name').fill(opts.name ?? 'E2E User')
   await page.getByTestId('register-email').fill(opts.email)
-  await page.getByTestId('register-password').fill(opts.password ?? 'password123')
+  await page
+    .getByTestId('register-password')
+    .fill(opts.password ?? 'password123')
   await page.getByTestId('register-submit').click()
 }
 
@@ -122,9 +124,7 @@ export async function bootstrapProject(page: Page, title = 'E2E Film') {
   await page.getByTestId('new-screenplay-button').click()
   await page.getByTestId('screenplay-title').fill('E2E Script')
   await page.getByTestId('screenplay-create-submit').click()
-  const screenplays = await pollApi<
-    Array<{ id: string; title: string }>
-  >(
+  const screenplays = await pollApi<Array<{ id: string; title: string }>>(
     page,
     `/projects/${project.id}/screenplays`,
     (list) => list.some((s) => s.title === 'E2E Script'),

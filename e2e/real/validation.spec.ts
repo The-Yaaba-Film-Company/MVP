@@ -41,9 +41,7 @@ test.describe('real validation flow', () => {
     )
     expect(orphan).toBeTruthy()
 
-    await page.goto(
-      `/projects/${projectId}/screenplays/${screenplayId}/scene`,
-    )
+    await page.goto(`/projects/${projectId}/screenplays/${screenplayId}/scene`)
     await expect(page.getByTestId('validation-panel')).toBeVisible()
     await expect(page.getByTestId('scene-editor')).toHaveAttribute(
       'contenteditable',

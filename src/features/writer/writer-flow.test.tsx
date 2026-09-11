@@ -104,7 +104,7 @@ describe('writer view — slash command (SPEC §24)', () => {
       editor.querySelector('[data-node-type="action"]') as HTMLElement,
     )
 
-    pressKey(editor, '/')
+    pressKey(editor, '/', { ctrlKey: true })
     await screen.findByTestId('slash-menu')
     const all = screen
       .getByTestId('slash-menu')
@@ -138,7 +138,7 @@ describe('writer view — slash command (SPEC §24)', () => {
       editor.querySelector('[data-node-type="action"]') as HTMLElement,
     )
 
-    pressKey(editor, '/')
+    pressKey(editor, '/', { ctrlKey: true })
     await screen.findByTestId('slash-menu')
 
     pressKey(editor, 'Backspace')
@@ -146,7 +146,7 @@ describe('writer view — slash command (SPEC §24)', () => {
       expect(screen.queryByTestId('slash-menu')).not.toBeInTheDocument(),
     )
 
-    pressKey(editor, '/')
+    pressKey(editor, '/', { ctrlKey: true })
     await screen.findByTestId('slash-menu')
     pressKey(editor, 'Escape')
     await waitFor(() =>

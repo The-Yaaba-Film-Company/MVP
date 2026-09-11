@@ -114,6 +114,64 @@ describe('setScreenplayElement', () => {
   })
 })
 
+describe('INT/EXT parsing on scene heading conversion', () => {
+  it('sets EXT when the text starts with EXT.', () => {
+    const editor = makeEditor({
+      type: 'doc',
+      content: [block('action', { id: 'n1' }, [text('EXT. PARK - NIGHT')])],
+    })
+    placeCursor(editor, 1)
+    editor.commands.setScreenplayElement('sceneHeading')
+
+    expect(editor.getJSON().content[0]).toMatchObject({
+      type: 'sceneHeading',
+      attrs: { intExt: 'EXT', location: 'PARK - NIGHT' },
+    })
+  })
+
+  it('sets INT_EXT when the text starts with INT./EXT.', () => {
+    const editor = makeEditor({
+      type: 'doc',
+      content: [block('action', { id: 'n1' }, [text('INT./EXT. ALLEY')])],
+    })
+    placeCursor(editor, 1)
+    editor.commands.setScreenplayElement('sceneHeading')
+
+    expect(editor.getJSON().content[0]).toMatchObject({
+      type: 'sceneHeading',
+      attrs: { intExt: 'INT_EXT', location: 'ALLEY' },
+    })
+  })
+
+  it('sets INT when the text starts with a lowercase int.', () => {
+    const editor = makeEditor({
+      type: 'doc',
+      content: [block('action', { id: 'n1' }, [text('int. warehouse')])],
+    })
+    placeCursor(editor, 1)
+    editor.commands.setScreenplayElement('sceneHeading')
+
+    expect(editor.getJSON().content[0]).toMatchObject({
+      type: 'sceneHeading',
+      attrs: { intExt: 'INT', location: 'warehouse' },
+    })
+  })
+
+  it('defaults to INT when no marker is present', () => {
+    const editor = makeEditor({
+      type: 'doc',
+      content: [block('action', { id: 'n1' }, [text('CUT TO:')])],
+    })
+    placeCursor(editor, 1)
+    editor.commands.setScreenplayElement('sceneHeading')
+
+    expect(editor.getJSON().content[0]).toMatchObject({
+      type: 'sceneHeading',
+      attrs: { intExt: 'INT', location: 'CUT TO:' },
+    })
+  })
+})
+
 describe('keyboard shortcuts (Ctrl/Cmd + 1..8)', () => {
   it('switches the block with Ctrl+2 (Action) and Ctrl+6 (Transition)', () => {
     const editor = makeEditor({

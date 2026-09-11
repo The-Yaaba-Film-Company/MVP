@@ -7,10 +7,12 @@ import { slashItems } from './elements'
 import { useSemanticDecorations } from '../semantic/decorations'
 import { TagMenu } from '../semantic/TagMenu'
 import { EntityPicker } from '../semantic/EntityPicker'
-import { SuggestionList } from '../semantic/SuggestionList'
 import { CharacterAutocomplete } from '../semantic/CharacterAutocomplete'
 import { selectionToSpan } from '../semantic/offset'
 import { useCreateAnnotation, useCreateEntity } from '../semantic/queries'
+import { ElementToolbar } from '#/components/story/ElementToolbar'
+import { SCREENPLAY_ELEMENTS } from '#/lib/screenplay/types'
+import type { ScreenplayElement } from '#/lib/screenplay/types'
 import type { TextSpan } from '../semantic/offset'
 import type { EntityType, Scene } from '#/api/types'
 
@@ -63,7 +65,7 @@ export function SceneEditor({
     editorProps: {
       attributes: {
         'data-testid': 'scene-editor',
-        class: 'min-h-[60vh] px-8 pb-24 pt-4 outline-none',
+        class: 'script-body min-h-[60vh] outline-none',
       },
       handleKeyDown: (_view, event) => {
         // Ctrl/Cmd + Shift + N — new scene (SPEC §29).
@@ -87,21 +89,17 @@ export function SceneEditor({
           openTag(editor)
           return true
         }
-        if (slashRef.current) return handleSlashKey(event)
-        // Open the slash command menu from an editable text block (SPEC §24).
+        // Ctrl/Cmd + / — element chooser (scene heading, action, …).
         if (
           event.key === '/' &&
-          !event.metaKey &&
-          !event.ctrlKey &&
+          (event.metaKey || event.ctrlKey) &&
           !event.altKey
         ) {
-          const { $from } = editor.state.selection
-          if ($from.parent.isTextblock) {
-            event.preventDefault()
-            openSlash(editor)
-            return true
-          }
+          event.preventDefault()
+          openSlash(editor)
+          return true
         }
+        if (slashRef.current) return handleSlashKey(event)
         return false
       },
     },
@@ -185,6 +183,14 @@ export function SceneEditor({
     setSlash(null)
   }
 
+  const setElement = (type: ScreenplayElement) => {
+    editor.chain().focus().setScreenplayElement(type).run()
+  }
+
+  const activeElement = SCREENPLAY_ELEMENTS.find((type) =>
+    editor.isActive(type),
+  )
+
   const tagSpan = tag?.span
   const pickEntity = (entityId: string) => {
     if (!tagSpan) return
@@ -232,8 +238,8 @@ export function SceneEditor({
   }, [editor, scene.locked])
 
   return (
-    <div className="relative">
-      <div className="sticky top-0 z-10 flex items-center justify-end gap-3 border-b border-neutral-200 bg-white px-4 py-1.5 text-xs text-neutral-500">
+    <div className="relative flex min-h-screen flex-col">
+      <div className="sticky top-0 z-10 flex items-center justify-end gap-3 border-b border-paper-200 bg-paper-50 px-6 py-1.5 text-xs text-ink-500">
         <span data-testid="save-status">
           {save.conflict
             ? 'Conflict — server version restored'
@@ -246,7 +252,7 @@ export function SceneEditor({
         {scene.locked ? (
           <span
             data-testid="locked-badge"
-            className="rounded bg-amber-100 px-2 py-0.5 text-amber-800"
+            className="rounded-md border border-ochre-600/40 bg-ochre-100 px-2 py-0.5 text-ochre-600"
           >
             Locked
           </span>
@@ -256,7 +262,7 @@ export function SceneEditor({
         <p
           role="alert"
           data-testid="save-conflict"
-          className="px-8 pt-2 text-sm text-amber-700"
+          className="px-8 pt-2 text-sm text-rust-600"
         >
           Your local edits were discarded and replaced with the server's
           version.
@@ -266,15 +272,23 @@ export function SceneEditor({
         <p
           role="alert"
           data-testid="save-error"
-          className="px-8 pt-2 text-sm text-red-600"
+          className="px-8 pt-2 text-sm text-rust-600"
         >
           Could not save your changes. They were reverted.
         </p>
       ) : null}
-      <div className="px-8 pt-3">
-        <SuggestionList sceneId={scene.id} projectId={projectId} />
+      <div className="flex flex-1 justify-center px-8 pb-24 pt-3">
+        <div className="flex w-full max-w-3xl flex-col gap-3">
+          <ElementToolbar
+            active={activeElement}
+            onSelect={setElement}
+            disabled={scene.locked}
+          />
+          <div className="rounded-lg border border-paper-300 bg-white shadow-sm">
+            <EditorContent editor={editor} />
+          </div>
+        </div>
       </div>
-      <EditorContent editor={editor} />
       <CharacterAutocomplete editor={editor} projectId={projectId} />
       {slash ? (
         <SlashCommandMenu

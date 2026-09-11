@@ -116,70 +116,72 @@ function ReportTable({
         placeholder="Filter rows…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="mb-4 w-full max-w-xs rounded border border-neutral-300 px-3 py-1.5 text-sm"
+        className="mb-4 w-full max-w-xs rounded-md border border-paper-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-clay-500 focus:outline-none focus:ring-1 focus:ring-clay-500"
       />
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
-            {table.getHeaderGroups()[0].headers.map((header) => (
-              <th key={header.id} className="px-3 py-2">
-                <button
-                  type="button"
-                  data-testid={`breakdown-sort-${header.id}`}
-                  onClick={() => toggleSort(header.id)}
-                  className="font-semibold uppercase"
-                >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext(),
-                  )}
-                  {sortIndicator(header.id)}
-                </button>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr
-              key={row.original.id}
-              data-testid={`breakdown-row-${row.original.id}`}
-              className="border-b border-neutral-100"
-            >
-              {row.getVisibleCells().map((cell) => {
-                const value = flexRender(
-                  cell.column.columnDef.cell,
-                  cell.getContext(),
-                )
-                return cell.column.id === 'name' ? (
-                  <td
-                    key={cell.id}
-                    data-testid={`breakdown-cell-${row.original.id}-name`}
-                    className="px-3 py-2 font-medium"
+      <div className="overflow-x-auto rounded-lg border border-paper-200 bg-white shadow-sm">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-paper-200 text-left text-xs uppercase tracking-[0.15em] text-clay-700">
+              {table.getHeaderGroups()[0].headers.map((header) => (
+                <th key={header.id} className="px-3 py-2">
+                  <button
+                    type="button"
+                    data-testid={`breakdown-sort-${header.id}`}
+                    onClick={() => toggleSort(header.id)}
+                    className="font-semibold uppercase"
                   >
-                    <span data-testid={`breakdown-name-cell-${row.index}`}>
-                      {value}
-                    </span>
-                  </td>
-                ) : (
-                  <td
-                    key={cell.id}
-                    data-testid={`breakdown-cell-${row.original.id}-${cell.column.id}`}
-                    className="px-3 py-2 text-neutral-500"
-                  >
-                    {value}
-                  </td>
-                )
-              })}
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    )}
+                    {sortIndicator(header.id)}
+                  </button>
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-      {tableRows.length === 0 ? (
-        <p className="px-3 py-6 text-sm text-neutral-500">
-          Nothing matches the filter.
-        </p>
-      ) : null}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr
+                key={row.original.id}
+                data-testid={`breakdown-row-${row.original.id}`}
+                className="border-b border-paper-100"
+              >
+                {row.getVisibleCells().map((cell) => {
+                  const value = flexRender(
+                    cell.column.columnDef.cell,
+                    cell.getContext(),
+                  )
+                  return cell.column.id === 'name' ? (
+                    <td
+                      key={cell.id}
+                      data-testid={`breakdown-cell-${row.original.id}-name`}
+                      className="px-3 py-2 font-medium text-ink-900"
+                    >
+                      <span data-testid={`breakdown-name-cell-${row.index}`}>
+                        {value}
+                      </span>
+                    </td>
+                  ) : (
+                    <td
+                      key={cell.id}
+                      data-testid={`breakdown-cell-${row.original.id}-${cell.column.id}`}
+                      className="px-3 py-2 text-ink-500"
+                    >
+                      {value}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {tableRows.length === 0 ? (
+          <p className="px-3 py-6 text-sm text-ink-500">
+            Nothing matches the filter.
+          </p>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -250,11 +252,10 @@ export function BreakdownView() {
   return (
     <div data-testid="breakdown-view" className="p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Breakdown</h1>
-        <span
-          data-testid="breakdown-runtime"
-          className="text-sm text-neutral-500"
-        >
+        <h1 className="font-serif text-2xl font-medium text-ink-900">
+          Breakdown
+        </h1>
+        <span data-testid="breakdown-runtime" className="text-sm text-ink-500">
           Estimated runtime: {runtime.data?.runtime_minutes ?? '–'} min
         </span>
       </div>
@@ -272,10 +273,10 @@ export function BreakdownView() {
             aria-selected={tab === t.key}
             data-testid={`breakdown-tab-${t.key}`}
             onClick={() => setTab(t.key)}
-            className={`rounded px-3 py-1.5 text-sm font-medium ${
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               tab === t.key
-                ? 'bg-neutral-900 text-white'
-                : 'text-neutral-600 hover:bg-neutral-100'
+                ? 'bg-clay-600 text-paper-50'
+                : 'text-ink-600 hover:bg-paper-100'
             }`}
           >
             {t.label}

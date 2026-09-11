@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_authenticated')({
 })
 
 function AuthenticatedLayout() {
-  const auth = useAuth();
+  const auth = useAuth()
 
   if (auth.isPending) {
     return (

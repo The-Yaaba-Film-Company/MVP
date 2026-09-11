@@ -1,6 +1,6 @@
 import type { Node as PMNode } from '@tiptap/pm/model'
 import type { IntExt } from '#/api/types'
-import { headingText } from './heading'
+import { headingText, parseIntExtPrefix } from './heading'
 
 // Ctrl/Cmd + 1..8 shortcut order (SPEC §21) == slash menu order (SPEC §24).
 export const SCREENPLAY_ELEMENT_LABELS: Record<string, string> = {
@@ -63,8 +63,15 @@ export function sourceText(node: PMNode): string {
 export function elementAttrs(typeName: string, sourceNode: PMNode) {
   const text = sourceText(sourceNode).trim()
   switch (typeName) {
-    case 'sceneHeading':
-      return { intExt: 'INT', location: text, timeOfDay: '', modifier: null }
+    case 'sceneHeading': {
+      const parsed = parseIntExtPrefix(text)
+      return {
+        intExt: parsed.intExt,
+        location: parsed.location,
+        timeOfDay: '',
+        modifier: null,
+      }
+    }
     case 'character':
       return {
         characterId: null,

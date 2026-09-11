@@ -135,6 +135,8 @@ export const api = {
   },
 
   entities: {
+    list: (projectId: string) =>
+      get<Entity[]>(`/projects/${projectId}/entities`),
     search: (projectId: string, query: { type: EntityType; q?: string }) => {
       const params: Record<string, string | undefined> = { type: query.type }
       if (query.q) params.q = query.q

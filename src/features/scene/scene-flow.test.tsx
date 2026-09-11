@@ -203,11 +203,8 @@ describe('scene view — semantic overlays', () => {
     expect(
       editor.querySelector('.semantic-suggestion[data-span-id="suggestion-1"]'),
     ).toHaveTextContent('enters')
-    // Read-only: no inline editing, but the review panel is available.
+    // Read-only: no inline editing.
     expect(editor).toHaveAttribute('contenteditable', 'false')
-    expect(screen.getByTestId('suggestion-list')).toBeInTheDocument()
-    expect(screen.getByTestId('suggestion-accept-suggestion-1')).toBeEnabled()
-    expect(screen.getByTestId('suggestion-reject-suggestion-1')).toBeEnabled()
     // The scene body text is untouched by the overlays.
     expect(editor.textContent).toContain('John enters the room.')
   }, 15_000)

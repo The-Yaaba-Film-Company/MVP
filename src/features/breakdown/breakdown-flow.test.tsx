@@ -65,11 +65,23 @@ describe('breakdown view', () => {
     await renderBreakdown()
 
     expect(screen.getByTestId('breakdown-view')).toBeInTheDocument()
-    const charRow = await screen.findByTestId('breakdown-row-entity-1', {}, { timeout: 10_000 })
-    expect(within(charRow).getByTestId('breakdown-cell-entity-1-name')).toHaveTextContent('JOHN')
-    expect(within(charRow).getByTestId('breakdown-cell-entity-1-dialogue')).toHaveTextContent('2')
-    expect(screen.getByTestId('breakdown-row-entity-2')).toHaveTextContent('CAROLINE')
-    expect(screen.getByTestId('breakdown-runtime')).toHaveTextContent('Estimated runtime: 47 min')
+    const charRow = await screen.findByTestId(
+      'breakdown-row-entity-1',
+      {},
+      { timeout: 10_000 },
+    )
+    expect(
+      within(charRow).getByTestId('breakdown-cell-entity-1-name'),
+    ).toHaveTextContent('JOHN')
+    expect(
+      within(charRow).getByTestId('breakdown-cell-entity-1-dialogue'),
+    ).toHaveTextContent('2')
+    expect(screen.getByTestId('breakdown-row-entity-2')).toHaveTextContent(
+      'CAROLINE',
+    )
+    expect(screen.getByTestId('breakdown-runtime')).toHaveTextContent(
+      'Estimated runtime: 47 min',
+    )
   })
 
   it('sorts and filters the active report client-side', async () => {
@@ -77,13 +89,19 @@ describe('breakdown view', () => {
     await renderBreakdown()
 
     await user.click(screen.getByTestId('breakdown-sort-dialogue'))
-    expect(screen.getByTestId('breakdown-name-cell-0')).toHaveTextContent('JOHN')
+    expect(screen.getByTestId('breakdown-name-cell-0')).toHaveTextContent(
+      'JOHN',
+    )
     await user.click(screen.getByTestId('breakdown-sort-dialogue'))
-    expect(screen.getByTestId('breakdown-name-cell-0')).toHaveTextContent('CAROLINE')
+    expect(screen.getByTestId('breakdown-name-cell-0')).toHaveTextContent(
+      'CAROLINE',
+    )
 
     await user.type(screen.getByTestId('breakdown-filter'), 'JOHN')
     expect(screen.getByTestId('breakdown-row-entity-1')).toBeInTheDocument()
-    expect(screen.queryByTestId('breakdown-row-entity-2')).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId('breakdown-row-entity-2'),
+    ).not.toBeInTheDocument()
   })
 
   it('switches between characters, locations, and entities reports', async () => {
@@ -91,11 +109,19 @@ describe('breakdown view', () => {
     await renderBreakdown()
 
     await user.click(screen.getByTestId('breakdown-tab-locations'))
-    expect(screen.getByTestId('breakdown-row-entity-3')).toHaveTextContent('POLICE STATION')
-    expect(screen.getByTestId('breakdown-row-entity-4')).toHaveTextContent('PARK')
+    expect(screen.getByTestId('breakdown-row-entity-3')).toHaveTextContent(
+      'POLICE STATION',
+    )
+    expect(screen.getByTestId('breakdown-row-entity-4')).toHaveTextContent(
+      'PARK',
+    )
 
     await user.click(screen.getByTestId('breakdown-tab-entities'))
-    expect(screen.getByTestId('breakdown-row-entity-5')).toHaveTextContent('PISTOL')
-    expect(screen.queryByTestId('breakdown-row-entity-1')).not.toBeInTheDocument()
+    expect(screen.getByTestId('breakdown-row-entity-5')).toHaveTextContent(
+      'PISTOL',
+    )
+    expect(
+      screen.queryByTestId('breakdown-row-entity-1'),
+    ).not.toBeInTheDocument()
   })
 })

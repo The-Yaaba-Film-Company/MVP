@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { http, HttpResponse } from 'msw'
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { server } from '#/api/mocks/server'
 import { buildAnnotation, buildSuggestion } from '#/api/mocks/fixtures'
 import { renderApp } from '#/test/renderApp'
@@ -31,7 +32,21 @@ async function renderWriter() {
   return { ...options, editor }
 }
 
-/** Seed a pending suggestion for scene-1's n1 action block. */
+/** Open the AI sheet and wait for the suggestion panel contents. */
+async function openAiPanel() {
+  await userEvent.click(screen.getByTestId('ai-integrations-trigger'))
+  await screen.findByTestId('ai-integrations-panel', {}, { timeout: 10_000 })
+}
+
+function panel() {
+  return within(screen.getByTestId('ai-integrations-panel'))
+}
+
+/**
+ * Seed a pending suggestion for scene-1's n1 action block. The AI panel and the
+ * read-only decoration hooks both read `/ai-suggestions`, so the dashed overlay
+ * renders from the same cache.
+ */
 function seedPendingSuggestion() {
   server.use(
     http.get('/api/scenes/scene-1/ai-suggestions', () =>
@@ -44,8 +59,8 @@ beforeEach(() => {
   document.cookie = 'csrf_token=flow-csrf; path=/'
 })
 
-describe('writer view — AI review (SPEC §26, §5.2)', () => {
-  it('analyzes the scene, then lists the pending suggestions', async () => {
+describe('AI review from the AI tab (SPEC §26, §5.2)', () => {
+  it('analyzes the active scene and lists the suggestions the API returned', async () => {
     let analyzed = false
     let csrf: string | null = null
     server.use(
@@ -59,48 +74,43 @@ describe('writer view — AI review (SPEC §26, §5.2)', () => {
       ),
     )
     const { editor } = await renderWriter()
+    await openAiPanel()
 
-    const button = screen.getByTestId('analyze-scene')
-    expect(button).toHaveTextContent('Analyze Scene')
-    fireEvent.click(button)
+    fireEvent.click(await screen.findByTestId('ai-run-analysis'))
 
-    await screen.findByTestId(
+    const row = await panel().findByTestId(
       'suggestion-suggestion-1',
       {},
       { timeout: 10_000 },
     )
     expect(analyzed).toBe(true)
     expect(csrf).toBe('flow-csrf')
-    expect(screen.getByTestId('suggestion-suggestion-1')).toHaveTextContent(
-      'PISTOL',
-    )
+    expect(row).toHaveTextContent('PISTOL')
+    // The returned suggestions render as dashed overlays, never scene content.
     await waitFor(() =>
-      expect(screen.getByTestId('analyze-scene')).toHaveTextContent('Analyzed'),
+      expect(
+        editor.querySelector(
+          '.semantic-suggestion[data-span-id="suggestion-1"]',
+        ),
+      ).not.toBeNull(),
     )
-    expect(screen.getByTestId('analyze-scene')).toBeDisabled()
-    // Pending suggestions render as dashed overlays, never scene content.
-    expect(
-      editor.querySelector('.semantic-suggestion[data-span-id="suggestion-1"]'),
-    ).not.toBeNull()
   }, 15_000)
 
-  it('accepts a suggestion: it becomes a solid annotation', async () => {
-    let accepted = false
-    let acceptCsrf: string | null = null
+  it('uses a suggestion from the AI tab: dashed overlay becomes a solid annotation', async () => {
+    let used = false
+    let useCsrf: string | null = null
     server.use(
       http.post(
         '/api/ai-suggestions/suggestion-1/accept',
         async ({ request }) => {
-          accepted = true
-          acceptCsrf = request.headers.get('x-csrf-token')
+          used = true
+          useCsrf = request.headers.get('x-csrf-token')
           return HttpResponse.json({ ...suggestion, status: 'accepted' })
         },
       ),
       http.get('/api/scenes/scene-1/ai-suggestions', () =>
         HttpResponse.json({
-          items: accepted
-            ? [{ ...suggestion, status: 'accepted' }]
-            : [suggestion],
+          items: used ? [{ ...suggestion, status: 'accepted' }] : [suggestion],
         }),
       ),
       http.get('/api/scenes/scene-1/annotations', () =>
@@ -119,8 +129,9 @@ describe('writer view — AI review (SPEC §26, §5.2)', () => {
       ),
     )
     const { editor } = await renderWriter()
+    await openAiPanel()
 
-    await screen.findByTestId(
+    await panel().findByTestId(
       'suggestion-suggestion-1',
       {},
       { timeout: 10_000 },
@@ -131,41 +142,45 @@ describe('writer view — AI review (SPEC §26, §5.2)', () => {
 
     fireEvent.click(screen.getByTestId('suggestion-accept-suggestion-1'))
 
-    await waitFor(() => expect(accepted).toBe(true))
-    expect(acceptCsrf).toBe('flow-csrf')
+    await waitFor(() => expect(used).toBe(true))
+    expect(useCsrf).toBe('flow-csrf')
     await waitFor(
       () =>
         expect(
-          screen.queryByTestId('suggestion-suggestion-1'),
+          panel().queryByTestId('suggestion-suggestion-1'),
         ).not.toBeInTheDocument(),
       { timeout: 10_000 },
     )
     // The accepted suggestion is now a persisted annotation overlay.
-    expect(
-      editor.querySelector(
-        '.semantic-annotation[data-span-id="annotation-ai"]',
-      ),
-    ).not.toBeNull()
+    await waitFor(
+      () =>
+        expect(
+          editor.querySelector(
+            '.semantic-annotation[data-span-id="annotation-ai"]',
+          ),
+        ).not.toBeNull(),
+      { timeout: 10_000 },
+    )
     expect(
       editor.querySelector('.semantic-suggestion[data-span-id="suggestion-1"]'),
     ).toBeNull()
   }, 15_000)
 
-  it('rejects a suggestion: no annotation is created and the overlay clears', async () => {
-    let rejected = false
-    let rejectCsrf: string | null = null
+  it('removes a suggestion from the AI tab: no annotation is created and the overlay clears', async () => {
+    let removed = false
+    let removeCsrf: string | null = null
     server.use(
       http.post(
         '/api/ai-suggestions/suggestion-1/reject',
         async ({ request }) => {
-          rejected = true
-          rejectCsrf = request.headers.get('x-csrf-token')
+          removed = true
+          removeCsrf = request.headers.get('x-csrf-token')
           return HttpResponse.json({ ...suggestion, status: 'rejected' })
         },
       ),
       http.get('/api/scenes/scene-1/ai-suggestions', () =>
         HttpResponse.json({
-          items: rejected
+          items: removed
             ? [{ ...suggestion, status: 'rejected' }]
             : [suggestion],
         }),
@@ -175,48 +190,44 @@ describe('writer view — AI review (SPEC §26, §5.2)', () => {
       ),
     )
     const { editor } = await renderWriter()
+    await openAiPanel()
 
-    await screen.findByTestId(
+    await panel().findByTestId(
       'suggestion-suggestion-1',
       {},
       { timeout: 10_000 },
     )
+    await waitFor(() =>
+      expect(editor.querySelector('.semantic-suggestion')).not.toBeNull(),
+    )
 
     fireEvent.click(screen.getByTestId('suggestion-reject-suggestion-1'))
 
-    await waitFor(() => expect(rejected).toBe(true))
-    expect(rejectCsrf).toBe('flow-csrf')
+    await waitFor(() => expect(removed).toBe(true))
+    expect(removeCsrf).toBe('flow-csrf')
     await waitFor(
       () =>
         expect(
-          screen.queryByTestId('suggestion-suggestion-1'),
+          panel().queryByTestId('suggestion-suggestion-1'),
         ).not.toBeInTheDocument(),
       { timeout: 10_000 },
     )
-    // Rejects never write to the annotation or entity graph.
+    // Removes never write to the annotation or entity graph.
     expect(
       editor.querySelector(
         '.semantic-annotation[data-span-id="annotation-ai"]',
       ),
     ).toBeNull()
-    expect(
-      editor.querySelector('.semantic-suggestion[data-span-id="suggestion-1"]'),
-    ).toBeNull()
-  }, 15_000)
-
-  it('tags text next to an unreviewed suggestion without disturbing it', async () => {
-    // Existing annotation flow still works while a suggestion is pending.
-    seedPendingSuggestion()
-    const { editor } = await renderWriter()
-    await screen.findByTestId(
-      'suggestion-suggestion-1',
-      {},
-      { timeout: 10_000 },
+    await waitFor(() =>
+      expect(
+        editor.querySelector(
+          '.semantic-suggestion[data-span-id="suggestion-1"]',
+        ),
+      ).toBeNull(),
     )
-    expect(editor.querySelector('.semantic-suggestion')).not.toBeNull()
   }, 15_000)
 
-  it('rolls back the accept when the server rejects it: suggestion stays pending, no annotation', async () => {
+  it('rolls back the use when the server rejects it: suggestion stays pending, no annotation', async () => {
     seedPendingSuggestion()
     server.use(
       http.post('/api/ai-suggestions/suggestion-1/accept', () =>
@@ -227,8 +238,9 @@ describe('writer view — AI review (SPEC §26, §5.2)', () => {
       ),
     )
     const { editor } = await renderWriter()
+    await openAiPanel()
 
-    await screen.findByTestId(
+    await panel().findByTestId(
       'suggestion-suggestion-1',
       {},
       { timeout: 10_000 },
@@ -236,12 +248,12 @@ describe('writer view — AI review (SPEC §26, §5.2)', () => {
 
     fireEvent.click(screen.getByTestId('suggestion-accept-suggestion-1'))
 
-    // Failed accept rolls the suggestion back to pending and no solid
+    // Failed use rolls the suggestion back to pending and no solid
     // annotation for it exists.
     await waitFor(
       () =>
         expect(
-          screen.getByTestId('suggestion-suggestion-1'),
+          panel().getByTestId('suggestion-suggestion-1'),
         ).toBeInTheDocument(),
       { timeout: 10_000 },
     )
@@ -253,7 +265,7 @@ describe('writer view — AI review (SPEC §26, §5.2)', () => {
     ).toBeNull()
   }, 15_000)
 
-  it('rolls back the reject when the server rejects it: suggestion stays pending', async () => {
+  it('rolls back the removal when the server rejects it: suggestion stays pending', async () => {
     seedPendingSuggestion()
     server.use(
       http.post('/api/ai-suggestions/suggestion-1/reject', () =>
@@ -261,8 +273,9 @@ describe('writer view — AI review (SPEC §26, §5.2)', () => {
       ),
     )
     const { editor } = await renderWriter()
+    await openAiPanel()
 
-    await screen.findByTestId(
+    await panel().findByTestId(
       'suggestion-suggestion-1',
       {},
       { timeout: 10_000 },
@@ -270,11 +283,11 @@ describe('writer view — AI review (SPEC §26, §5.2)', () => {
 
     fireEvent.click(screen.getByTestId('suggestion-reject-suggestion-1'))
 
-    // Failed reject rolls the suggestion back to pending.
+    // Failed remove rolls the suggestion back to pending.
     await waitFor(
       () =>
         expect(
-          screen.getByTestId('suggestion-suggestion-1'),
+          panel().getByTestId('suggestion-suggestion-1'),
         ).toBeInTheDocument(),
       { timeout: 10_000 },
     )

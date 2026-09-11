@@ -94,101 +94,105 @@ export function NavigatorView() {
   return (
     <div data-testid="navigator-view" className="p-6">
       <div className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-lg font-semibold">Scene Navigator</h1>
+        <h1 className="font-serif text-2xl font-medium text-ink-900">
+          Scene Navigator
+        </h1>
         <input
           data-testid="navigator-filter"
           type="search"
           placeholder="Filter scenes…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="rounded border border-neutral-300 px-3 py-1.5 text-sm"
+          className="rounded-md border border-paper-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-clay-500 focus:outline-none focus:ring-1 focus:ring-clay-500"
         />
       </div>
 
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
-            <th className="px-3 py-2">
-              <button
-                type="button"
-                data-testid="navigator-sort-number"
-                onClick={() => toggleSort('number')}
-                className="font-semibold uppercase"
-              >
-                # {sortIndicator('number')}
-              </button>
-            </th>
-            <th className="px-3 py-2">
-              <button
-                type="button"
-                data-testid="navigator-sort-heading"
-                onClick={() => toggleSort('heading')}
-                className="font-semibold uppercase"
-              >
-                Scene {sortIndicator('heading')}
-              </button>
-            </th>
-            <th className="px-3 py-2">Pages</th>
-            <th className="px-3 py-2">Status</th>
-            <th className="px-3 py-2" aria-hidden="true" />
-          </tr>
-        </thead>
-        <tbody>
-          {visible.map((row, index) => (
-            <tr
-              key={row.scene.id}
-              data-testid={`navigator-row-${row.scene.id}`}
-              className="border-b border-neutral-100"
-            >
-              <td
-                data-testid="navigator-number"
-                className="px-3 py-2 text-right font-mono text-neutral-500"
-              >
-                {row.scene.number ?? '–'}
-              </td>
-              <td
-                data-testid={`navigator-heading-cell-${index}`}
-                className="px-3 py-2 font-medium"
-              >
-                <span data-testid="navigator-heading">{row.heading}</span>
-              </td>
-              <td
-                data-testid="navigator-pages"
-                className="px-3 py-2 text-neutral-500"
-              >
-                {row.pages}
-              </td>
-              <td data-testid="navigator-status" className="px-3 py-2">
-                {row.locked ? (
-                  <span
-                    data-testid="navigator-locked"
-                    className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800"
-                  >
-                    Locked
-                  </span>
-                ) : (
-                  <span className="text-neutral-400">–</span>
-                )}
-              </td>
-              <td className="px-3 py-2 text-right">
+      <div className="overflow-x-auto rounded-lg border border-paper-200 bg-white shadow-sm">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-paper-200 text-left text-xs uppercase tracking-[0.15em] text-clay-700">
+              <th className="px-3 py-2">
                 <button
                   type="button"
-                  data-testid={`navigator-open-${row.scene.id}`}
-                  onClick={() => openScene(row.scene)}
-                  className="rounded bg-neutral-900 px-2.5 py-1 text-xs text-white"
+                  data-testid="navigator-sort-number"
+                  onClick={() => toggleSort('number')}
+                  className="font-semibold uppercase"
                 >
-                  Open
+                  # {sortIndicator('number')}
                 </button>
-              </td>
+              </th>
+              <th className="px-3 py-2">
+                <button
+                  type="button"
+                  data-testid="navigator-sort-heading"
+                  onClick={() => toggleSort('heading')}
+                  className="font-semibold uppercase"
+                >
+                  Scene {sortIndicator('heading')}
+                </button>
+              </th>
+              <th className="px-3 py-2">Pages</th>
+              <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2" aria-hidden="true" />
             </tr>
-          ))}
-        </tbody>
-      </table>
-      {visible.length === 0 ? (
-        <p className="px-3 py-6 text-sm text-neutral-500">
-          No scenes match the filter.
-        </p>
-      ) : null}
+          </thead>
+          <tbody>
+            {visible.map((row, index) => (
+              <tr
+                key={row.scene.id}
+                data-testid={`navigator-row-${row.scene.id}`}
+                className="border-b border-paper-100"
+              >
+                <td
+                  data-testid="navigator-number"
+                  className="px-3 py-2 text-right font-mono text-clay-700"
+                >
+                  {row.scene.number ?? '–'}
+                </td>
+                <td
+                  data-testid={`navigator-heading-cell-${index}`}
+                  className="px-3 py-2 font-medium text-ink-900"
+                >
+                  <span data-testid="navigator-heading">{row.heading}</span>
+                </td>
+                <td
+                  data-testid="navigator-pages"
+                  className="px-3 py-2 text-ink-500"
+                >
+                  {row.pages}
+                </td>
+                <td data-testid="navigator-status" className="px-3 py-2">
+                  {row.locked ? (
+                    <span
+                      data-testid="navigator-locked"
+                      className="rounded-md border border-ochre-600/40 bg-ochre-100 px-2 py-0.5 text-xs text-ochre-600"
+                    >
+                      Locked
+                    </span>
+                  ) : (
+                    <span className="text-ink-400">–</span>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <button
+                    type="button"
+                    data-testid={`navigator-open-${row.scene.id}`}
+                    onClick={() => openScene(row.scene)}
+                    className="rounded-md bg-clay-600 px-2.5 py-1 text-xs font-medium text-paper-50 hover:bg-clay-700"
+                  >
+                    Open
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {visible.length === 0 ? (
+          <p className="px-3 py-6 text-sm text-ink-500">
+            No scenes match the filter.
+          </p>
+        ) : null}
+      </div>
     </div>
   )
 }

@@ -27,15 +27,15 @@ Call log:
 
 ```yaml
 - main:
-  - heading "Create account" [level=1]
-  - text: Display name
-  - textbox "Display name": E2E User
-  - text: Email
-  - textbox "Email": e2e-1788102215992-933341@example.com
-  - text: Password
-  - textbox "Password": password123
-  - alert: Registration failed. Please try again.
-  - button "Create account"
+    - heading "Create account" [level=1]
+    - text: Display name
+    - textbox "Display name": E2E User
+    - text: Email
+    - textbox "Email": e2e-1788102215992-933341@example.com
+    - text: Password
+    - textbox "Password": password123
+    - alert: Registration failed. Please try again.
+    - button "Create account"
 - button "Open TanStack Devtools"
 ```
 
@@ -71,11 +71,11 @@ Call log:
   32  |     return (await res.json()) as T
   33  |   }, { path, method: init.method, body: init.body })
   34  | }
-  35  | 
+  35  |
   36  | export function uniqueEmail(): string {
   37  |   return `e2e-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.com`
   38  | }
-  39  | 
+  39  |
   40  | /** Retry an apiFetch until `predicate` matches, or fail after timeoutMs. */
   41  | async function pollApi<T>(
   42  |   page: Page,
@@ -101,7 +101,7 @@ Call log:
   62  |     ).slice(0, 200)})`,
   63  |   )
   64  | }
-  65  | 
+  65  |
   66  | /**
   67  |  * Wait until a scene's content containing `phrase` is persisted to the real DB.
   68  |  * Autosave debounces (800ms) and the UI's "Saved" default status is not proof
@@ -122,7 +122,7 @@ Call log:
   83  |       ),
   84  |   )
   85  | }
-  86  | 
+  86  |
   87  | export async function registerViaUi(
   88  |   page: Page,
   89  |   opts: { email: string; password?: string; name?: string },
@@ -138,13 +138,13 @@ Call log:
   99  |   await page.getByTestId('register-password').fill(opts.password ?? 'password123')
   100 |   await page.getByTestId('register-submit').click()
   101 | }
-  102 | 
+  102 |
   103 | /** Register + create project + screenplay, returning both ids. */
   104 | export async function bootstrapProject(page: Page, title = 'E2E Film') {
   105 |   await registerViaUi(page, { email: uniqueEmail() })
 > 106 |   await expect(page.getByTestId('projects-page')).toBeVisible()
       |                                                   ^ Error: expect(locator).toBeVisible() failed
-  107 | 
+  107 |
   108 |   // The create POST and this GET race; poll until the project is committed.
   109 |   await page.getByTestId('new-project-button').click()
   110 |   await page.getByTestId('project-title').fill(title)
@@ -157,7 +157,7 @@ Call log:
   117 |   const project = projects.find((p) => p.title === title)
   118 |   if (!project) throw new Error(`project ${title} not created`)
   119 |   await page.getByTestId(`project-card-${project.id}`).click()
-  120 | 
+  120 |
   121 |   await expect(page.getByTestId('screenplays-page')).toBeVisible()
   122 |   await page.getByTestId('new-screenplay-button').click()
   123 |   await page.getByTestId('screenplay-title').fill('E2E Script')
@@ -171,7 +171,7 @@ Call log:
   131 |   )
   132 |   const screenplay = screenplays.find((s) => s.title === 'E2E Script')
   133 |   if (!screenplay) throw new Error('screenplay not created')
-  134 | 
+  134 |
   135 |   return { projectId: project.id, screenplayId: screenplay.id }
   136 | }
 ```
